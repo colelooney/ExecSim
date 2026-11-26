@@ -1,11 +1,12 @@
 from execsim.engine.order import Order, Limit, Side, OrderType
 import pytest
 
-def make_order(id_number,shares=100):
-    return Order(id_number,Side.BUY,OrderType.LIMIT,shares,
-                 entry_time=0,event_time=0,price=100)
-
 ### helpers
+
+def make_order(id_number,side=Side.BUY,shares=100,price=100):
+    return Order(id_number,side,OrderType.LIMIT,shares,
+                 entry_time=0,event_time=0,price=price)
+
 def walk_forward(level):
     ids = []
     order = level.head_order
