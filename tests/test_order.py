@@ -190,7 +190,7 @@ def test_reduce_by_exactly_number_of_available_shares_does_not_remove():
 def test_reduce_an_order_not_in_this_limit_raises_error():
     level, (a,b,c) = make_level(100,200,300)
     level2, (d,) = make_level(400)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         level.reduce(d,400)
     assert walk_forward(level)  == [1,2,3]
     assert walk_backward(level) == [3,2,1]
@@ -205,7 +205,7 @@ def test_reduce_an_order_not_in_this_limit_raises_error():
 def test_reduce_an_already_removed_order():
     level, (a, b, c) = make_level(100, 200, 300)
     level.remove(a)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         level.reduce(a,100)
     assert walk_forward(level) == [2,3]
     assert walk_backward(level) == [3,2]
@@ -217,9 +217,9 @@ def test_reduce_an_already_removed_order():
 
 def test_reduce_by_non_negative_value():
     level, (a, b, c) = make_level(100, 200, 300)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         level.reduce(a,0)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValueError):
         level.reduce(b,-10)
     assert a.shares == 100
     assert b.shares == 200

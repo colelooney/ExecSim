@@ -65,6 +65,12 @@ class Limit: # single limit price
         order.prev_order = None
         order.parent_limit = None
 
-
-                    
-
+    def reduce(self,order,qty):
+        if order.parent_limit is not self:
+            raise ValueError("Order is not in this level")
+        if qty <= 0:
+            raise ValueError("Quantity must be positive")
+        if qty > order.shares:
+            raise ValueError("Quantity must not exceed number of shares")
+        order.shares -= qty
+        self.total_volume -= qty
