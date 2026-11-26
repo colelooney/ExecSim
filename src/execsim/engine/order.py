@@ -43,3 +43,28 @@ class Limit: # single limit price
         self.tail_order = order
         self.order_count += 1
         self.total_volume += order.shares
+
+    def remove(self,order):
+        if order.prev_order is None: # remove head order
+            if order.next_order is not None:
+                self.head_order = order.next_order
+                self.head_order.prev_order = None
+            else:
+                self.head_order = None # single order case
+                self.tail_order = None
+        elif order.next_order is None: #remove tail order
+            self.tail_order = order.prev_order # single order case already considered above
+            self.tail_order.next_order = None
+        else: # middle case
+            order.prev_order.next_order = order.next_order
+            order.next_order.prev_order = order.prev_order
+        self.order_count -= 1
+        self.total_volume -= order.shares
+
+        order.next_order = None
+        order.prev_order = None
+        order.parent_limit = None
+
+
+                    
+
