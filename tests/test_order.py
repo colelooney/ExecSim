@@ -1,4 +1,5 @@
 from execsim.engine.order import Order, Limit, Side, OrderType
+import pytest
 
 def make_order(id_number,shares=100):
     return Order(id_number,Side.BUY,OrderType.LIMIT,shares,
@@ -154,3 +155,73 @@ def test_remove_two_head_orders():
     assert level.total_volume == 300
     assert walk_forward(level)  == [3]
     assert walk_backward(level) == [3]
+
+def test_partial_reduce_quantity():
+    level, (a, b, c) = make_level(100, 200, 300)
+    level.reduce(a,10)
+
+    assert level.order_count == 3
+    assert level.total_volume == 590
+    assert walk_forward(level)  == [1,2,3]
+    assert walk_backward(level) == [3,2,1]
+    assert a.shares == 90
+    assert a.original_shares == 100
+
+def test_reduce_by_more_than_available_raises_value_error():
+    level, (a, b, c) = make_level(100, 200, 300)
+    with pytest.raises(ValueError) as excinfo:
+        level.reduce(a,200)
+    assert a.shares == 100
+    assert level.total_volume == 600
+
+
+def test_reduce_by_exactly_number_of_available_shares_does_not_remove():
+    level, (a, b, c) = make_level(100, 200, 300)
+    level.reduce(b,200)
+
+    assert walk_forward(level)  == [1,2,3]
+    assert walk_backward(level) == [3,2,1]
+    assert b.shares == 0
+    assert a.next_order is b
+    assert b.prev_order is a
+    assert level.order_count == 3
+    assert level.total_volume == 400
+
+def test_reduce_an_order_not_in_this_limit_raises_error():
+    level, (a,b,c) = make_level(100,200,300)
+    level2, (d,) = make_level(400)
+    with pytest.raises(ValueError) as excinfo:
+        level.reduce(d,400)
+    assert walk_forward(level)  == [1,2,3]
+    assert walk_backward(level) == [3,2,1]
+    assert walk_forward(level2)  == [1]
+    assert walk_backward(level2) == [1]
+    assert d.shares == 400
+    assert level2.order_count == 1
+    assert level.order_count == 3
+    assert level2.total_volume == 400
+    assert level.total_volume == 600
+
+def test_reduce_an_already_removed_order():
+    level, (a, b, c) = make_level(100, 200, 300)
+    level.remove(a)
+    with pytest.raises(ValueError) as excinfo:
+        level.reduce(a,100)
+    assert walk_forward(level) == [2,3]
+    assert walk_backward(level) == [3,2]
+    assert level.order_count == 2
+    assert level.total_volume == 500
+    assert a.parent_limit is None
+    assert a.next_order is None
+    assert a.prev_order is None
+
+def test_reduce_by_non_negative_value():
+    level, (a, b, c) = make_level(100, 200, 300)
+    with pytest.raises(ValueError) as excinfo:
+        level.reduce(a,0)
+    with pytest.raises(ValueError) as excinfo:
+        level.reduce(b,-10)
+    assert a.shares == 100
+    assert b.shares == 200
+    assert level.total_volume == 600
+    assert level.order_count == 3
