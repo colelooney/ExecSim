@@ -71,3 +71,95 @@ def test_three_appends_to_empty_level():
     assert level.order_count == 3
     assert level.total_volume == 600
 
+def test_remove_only_order_from_level():
+    level = Limit(limit_price=100)
+    a = make_order(id_number=1,shares=100)
+    level.append(a)
+
+    level.remove(a)
+
+    assert level.head_order is None
+    assert level.tail_order is None
+    assert level.order_count == 0
+    assert level.total_volume == 0
+
+def test_remove_head_order_from_level_of_three():
+    level = Limit(limit_price=100)
+    a = make_order(id_number=1,shares=100)
+    level.append(a)
+    b = make_order(id_number=2,shares=200)
+    level.append(b)
+    c = make_order(id_number=3,shares=300)
+    level.append(c)
+
+    level.remove(a)
+
+    assert level.head_order is b
+    assert level.tail_order is c
+    assert level.order_count == 2
+    assert level.total_volume == 500
+    assert b.prev_order is None
+    assert a.prev_order is None
+    assert a.next_order is None
+    assert a.parent_limit is None
+
+def test_remove_middle_order_from_level_of_three():
+    level = Limit(limit_price=100)
+    a = make_order(id_number=1,shares=100)
+    level.append(a)
+    b = make_order(id_number=2,shares=200)
+    level.append(b)
+    c = make_order(id_number=3,shares=300)
+    level.append(c)
+
+    level.remove(b)
+
+    assert level.head_order is a
+    assert level.tail_order is c
+    assert level.order_count == 2
+    assert level.total_volume == 400
+    assert c.prev_order is a
+    assert a.next_order is b
+    assert b.prev_order is None
+    assert b.next_order is None
+    assert b.parent_limit is None
+
+def test_remove_tail_order_from_level_of_three():
+    level = Limit(limit_price=100)
+    a = make_order(id_number=1,shares=100)
+    level.append(a)
+    b = make_order(id_number=2,shares=200)
+    level.append(b)
+    c = make_order(id_number=3,shares=300)
+    level.append(c)
+
+    level.remove(c)
+
+    assert level.head_order is a
+    assert level.tail_order is b
+    assert level.order_count == 2
+    assert level.total_volume == 300
+    assert b.next_order is None
+    assert c.prev_order is None
+    assert c.next_order is None
+    assert c.parent_limit is None
+
+def test_remove_then_append_middle_order():
+    level = Limit(limit_price=100)
+    a = make_order(id_number=1,shares=100)
+    level.append(a)
+    b = make_order(id_number=2,shares=200)
+    level.append(b)
+    c = make_order(id_number=3,shares=300)
+    level.append(c)
+
+    level.remove(b)
+    level.append(b)
+
+    assert level.tail_order is b
+    assert b.prev_order is c
+    assert b.next_order is None
+    assert c.next_order is b
+    assert c.prev_order is a
+    assert level.order_count == 3
+    assert level.total_volume == 600
