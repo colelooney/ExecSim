@@ -21,13 +21,17 @@ def walk_backward(level):
         order = order.prev_order
     return ids
 
+def make_level(*share_counts):
+    level = Limit(limit_price=100)
+    orders = [make_order(i + 1, s) for i, s in enumerate(share_counts)]
+    for o in orders:
+        level.append(o)
+    return level, orders
+
 
 
 def test_append_to_empty_level():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-
-    level.append(a)
+    level, (a,) = make_level(100)
 
     assert level.head_order is a
     assert level.tail_order is a
@@ -37,14 +41,7 @@ def test_append_to_empty_level():
     assert a.prev_order is None and a.next_order is None
 
 def test_append_second_order_to_level():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-
-    level.append(a)
-
-    b = make_order(id_number=2,shares=200)
-
-    level.append(b)
+    level, (a, b) = make_level(100, 200)
 
     assert level.head_order is a
     assert level.tail_order is b
@@ -55,16 +52,7 @@ def test_append_second_order_to_level():
 
 
 def test_three_appends_to_empty_level():
-    level = Limit(limit_price=100)
-
-    a = make_order(id_number=1,shares=100)
-    level.append(a)
-
-    b = make_order(id_number=2,shares=200)
-    level.append(b)
-
-    c = make_order(id_number=3,shares=300)
-    level.append(c)
+    level, (a, b, c) = make_level(100, 200, 300)
 
     assert walk_forward(level)  == [1,2,3]
     assert walk_backward(level) == [3,2,1]
@@ -72,9 +60,7 @@ def test_three_appends_to_empty_level():
     assert level.total_volume == 600
 
 def test_remove_only_order_from_level():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-    level.append(a)
+    level, (a,) = make_level(100)
 
     level.remove(a)
 
@@ -82,15 +68,15 @@ def test_remove_only_order_from_level():
     assert level.tail_order is None
     assert level.order_count == 0
     assert level.total_volume == 0
+    assert a.prev_order is None
+    assert a.next_order is None
+    assert a.parent_limit is None
+    assert walk_forward(level)  == []
+    assert walk_backward(level) == []
+
 
 def test_remove_head_order_from_level_of_three():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-    level.append(a)
-    b = make_order(id_number=2,shares=200)
-    level.append(b)
-    c = make_order(id_number=3,shares=300)
-    level.append(c)
+    level, (a, b, c) = make_level(100, 200, 300)
 
     level.remove(a)
 
@@ -102,15 +88,11 @@ def test_remove_head_order_from_level_of_three():
     assert a.prev_order is None
     assert a.next_order is None
     assert a.parent_limit is None
+    assert walk_forward(level)  == [2,3]
+    assert walk_backward(level) == [3,2]
 
 def test_remove_middle_order_from_level_of_three():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-    level.append(a)
-    b = make_order(id_number=2,shares=200)
-    level.append(b)
-    c = make_order(id_number=3,shares=300)
-    level.append(c)
+    level, (a, b, c) = make_level(100, 200, 300)
 
     level.remove(b)
 
@@ -119,19 +101,15 @@ def test_remove_middle_order_from_level_of_three():
     assert level.order_count == 2
     assert level.total_volume == 400
     assert c.prev_order is a
-    assert a.next_order is b
+    assert a.next_order is c
     assert b.prev_order is None
     assert b.next_order is None
     assert b.parent_limit is None
+    assert walk_forward(level)  == [1,3]
+    assert walk_backward(level) == [3,1]
 
 def test_remove_tail_order_from_level_of_three():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-    level.append(a)
-    b = make_order(id_number=2,shares=200)
-    level.append(b)
-    c = make_order(id_number=3,shares=300)
-    level.append(c)
+    level, (a, b, c) = make_level(100, 200, 300)
 
     level.remove(c)
 
@@ -143,15 +121,11 @@ def test_remove_tail_order_from_level_of_three():
     assert c.prev_order is None
     assert c.next_order is None
     assert c.parent_limit is None
+    assert walk_forward(level)  == [1,2]
+    assert walk_backward(level) == [2,1]
 
 def test_remove_then_append_middle_order():
-    level = Limit(limit_price=100)
-    a = make_order(id_number=1,shares=100)
-    level.append(a)
-    b = make_order(id_number=2,shares=200)
-    level.append(b)
-    c = make_order(id_number=3,shares=300)
-    level.append(c)
+    level, (a, b, c) = make_level(100, 200, 300)
 
     level.remove(b)
     level.append(b)
@@ -163,3 +137,20 @@ def test_remove_then_append_middle_order():
     assert c.prev_order is a
     assert level.order_count == 3
     assert level.total_volume == 600
+    assert walk_forward(level)  == [1,3,2]
+    assert walk_backward(level) == [2,3,1]
+
+def test_remove_two_head_orders():
+    level, (a, b, c) = make_level(100, 200, 300)
+
+    level.remove(a)
+    level.remove(b)
+
+    assert level.tail_order is c
+    assert level.head_order is c
+    assert c.prev_order is None
+    assert c.next_order is None
+    assert level.order_count == 1
+    assert level.total_volume == 300
+    assert walk_forward(level)  == [3]
+    assert walk_backward(level) == [3]
