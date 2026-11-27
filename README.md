@@ -16,5 +16,9 @@ Independent project to learn more about order books and execution algos for sell
 - Execute: removes an order from the inside of the book
 - Each operation keyed off an id number implying hash table will be efficient
 
+### Current Status
+- engine.order completed
+- engine.book can now add and cancel orders, execution not yet implemented; all in O(1) time
+
 ### Background Readings
 - [How to Build a Fast Limit Order Book](https://web.archive.org/web/20110219163448/http://howtohft.wordpress.com/2011/02/15/how-to-build-a-fast-limit-order-book/)
