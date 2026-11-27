@@ -46,3 +46,7 @@ class BookSide:
         if self.heap == []:
             return None
         return self.store_sign*self.heap[0]
+
+    def best_level(self):
+        price = self.best_price()
+        return None if price is None else self.levels[price]
