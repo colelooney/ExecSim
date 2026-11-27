@@ -22,7 +22,7 @@ def walk_backward(level):
 
 def make_level(*share_counts):
     level = Limit(limit_price=100)
-    orders = [make_order(i + 1, s) for i, s in enumerate(share_counts)]
+    orders = [make_order(i + 1, shares=s) for i, s in enumerate(share_counts)]
     for o in orders:
         level.append(o)
     return level, orders
