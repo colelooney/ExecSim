@@ -66,7 +66,7 @@ def test_unknown_id_on_cancel_raises_value_error():
     bids.add(a)
     with pytest.raises(ValueError):
         bids.cancel(2)
-    assert 100 in bids
+    assert 100 in bids.levels
     assert bids.best_price() == 100
 
 def test_duplicate_id_on_add_raises_value_error():
