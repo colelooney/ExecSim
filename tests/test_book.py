@@ -94,3 +94,20 @@ def test_add_limit_order_with_price_none():
         bids.add(a)
     assert bids.levels == {}
     assert bids.best_price() is None
+
+def test_best_level_with_empty_side_returns_none():
+    bids = BookSide(side=Side.BUY)
+    assert bids.best_level() is None
+
+def test_best_level_returns_best_level():
+    bids = BookSide(side=Side.BUY)
+    a =make_order(1)
+    bids.add(a)
+    assert bids.best_level() is a.parent_limit
+
+def test_cancel_best_level_removes():
+    bids = BookSide(side=Side.BUY)
+    a =make_order(1)
+    bids.add(a)
+    bids.cancel(1)
+    assert bids.best_level() is None
